@@ -1,3 +1,10 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const SUPABASE_URL = "https://emdqrzcktxccxnmtodro.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVtZHFyemNrdHhjY3hubXRvZHJvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM2Njk4NjEsImV4cCI6MjA3OTI0NTg2MX0.lTy-cWj0Q7IE6J4FEwFvIr4A9HjWwsN1KUUqoujonXg";
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 /* =======================================================
    LOGIN — Frontend
 ======================================================= */
@@ -52,5 +59,6 @@ document.addEventListener("DOMContentLoaded", () => {
     msg.style.display = "block";
   }
 });
+
 
 
