@@ -1,4 +1,3 @@
-
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // =============================
@@ -37,29 +36,37 @@ document.addEventListener("DOMContentLoaded", () => {
     const { data: authData, error: authError } =
       await supabase.auth.signUp({
         email,
-        password
+        password,
+        options: {
+          data: { name } // metadata opcional
+        }
       });
 
     if (authError) {
-      return showMsg(authError.message, true);
+      console.error("Error en signUp:", authError);
+      return showMsg(authError.message || "Error al registrar en Auth", true);
     }
 
-    // UID del usuario
-    const uid = authData.user.id;
+    const uid = authData.user?.id; // UUID de auth.users
 
     // =============================
     // 2. Insertar datos extra en tabla 'users'
+    //    OJO: no mandamos 'id' (es SERIAL)
+    //    y password_hash es solo un placeholder
     // =============================
     const { error: insertError } = await supabase
       .from("users")
       .insert({
-        id: uid,
+        // id: lo genera el SERIAL
         name: name,
         email: email,
+        password_hash: "managed_by_supabase_auth",
         role: "cliente",
+        // puedes dejar plan/area/etc como NULL
       });
 
     if (insertError) {
+      console.error("Error al insertar en users:", insertError);
       return showMsg("Error al guardar el usuario en la BD", true);
     }
 
@@ -73,12 +80,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 1200);
   });
 
-  // Helpers
   function showMsg(text, danger = false) {
     msg.textContent = text;
     msg.className = "alert " + (danger ? "danger" : "success");
     msg.style.display = "block";
   }
 });
-
-
