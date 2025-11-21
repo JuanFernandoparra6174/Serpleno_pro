@@ -1,14 +1,18 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// =============================
+//  CONFIG SUPABASE
+// =============================
 const SUPABASE_URL = "https://emdqrzcktxccxnmtodro.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVtZHFyemNrdHhjY3hubXRvZHJvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM2Njk4NjEsImV4cCI6MjA3OTI0NTg2MX0.lTy-cWj0Q7IE6J4FEwFvIr4A9HjWwsN1KUUqoujonXg";
+const SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVtZHFyemNrdHhjY3hubXRvZHJvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM2Njk4NjEsImV4cCI6MjA3OTI0NTg2MX0.lTy-cWj0Q7IE6J4FEwFvIr4A9HjWwsN1KUUqoujonXg";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-/* =======================================================
-   REGISTER — Frontend
-======================================================= */
 
+// =============================
+//  REGISTER DIRECTO A SUPABASE
+// =============================
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.getElementById("registerForm");
   const msg = document.getElementById("regMsg");
@@ -17,7 +21,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-
     msg.style.display = "none";
 
     const name = form.name.value.trim();
@@ -28,35 +31,54 @@ document.addEventListener("DOMContentLoaded", () => {
       return showMsg("Completa todos los campos", true);
     }
 
-    try {
-      const res = await fetch("/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password })
+    // =============================
+    // 1. Crear usuario en AUTH
+    // =============================
+    const { data: authData, error: authError } =
+      await supabase.auth.signUp({
+        email,
+        password
       });
 
-      const j = await res.json();
-
-      if (!j.ok) {
-        return showMsg(j.error || "No se pudo registrar", true);
-      }
-
-      showMsg("Registro exitoso. Redirigiendo...", false);
-
-      // Redirige al login
-      setTimeout(() => {
-        window.location.href = "/login.html";
-      }, 1200);
-
-    } catch (err) {
-      showMsg("Error de conexión con el servidor", true);
+    if (authError) {
+      return showMsg(authError.message, true);
     }
+
+    // UID del usuario
+    const uid = authData.user.id;
+
+    // =============================
+    // 2. Insertar datos extra en tabla 'users'
+    // =============================
+    const { error: insertError } = await supabase
+      .from("users")
+      .insert({
+        id: uid,
+        name: name,
+        email: email,
+        role: "cliente",
+      });
+
+    if (insertError) {
+      return showMsg("Error al guardar el usuario en la BD", true);
+    }
+
+    // =============================
+    // 3. OK → redirigir
+    // =============================
+    showMsg("Registro exitoso. Redirigiendo...", false);
+
+    setTimeout(() => {
+      window.location.href = "/login.html";
+    }, 1200);
   });
 
+  // Helpers
   function showMsg(text, danger = false) {
     msg.textContent = text;
     msg.className = "alert " + (danger ? "danger" : "success");
     msg.style.display = "block";
   }
 });
+
 
